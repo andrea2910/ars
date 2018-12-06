@@ -136,6 +136,10 @@ ARS = R6Class(
       if (class(funx) != "function")
         stop("funx must be a function")
 
+      if(is.nan(funx(D[1]) | is.nan(funx(D[2]))))
+        stop("Function is not defined at bounds")
+
+
       f = function(x)
         funx(x, ...)
 
