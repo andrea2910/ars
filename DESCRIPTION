@@ -1,0 +1,28 @@
+Package: ars
+Type: Package
+Title: Adaptive Rejection Sampling
+Version: 0.1.0
+Author: Andrea Bonilla, Dingxin Cai, Yulun Wu
+Authors@R: c(
+    person("Andrea", "Bonilla", email = "andrea_bonilla@berkeley.edu", role = c("aut", "cre")),
+    person("Dingxin", "Cai", email = "dxcai@berkeley.edu", role = c("aut")),
+    person("Yulun", "Wu", email = "yulun_wu@berkeley.edu", role = c("aut"))
+    )
+Description: A package that uses R6 Classes to perfrom Adaptive 
+    Rejection Sampling based on W. R. Gilks, P. Wild (1992), 
+    "Adaptive Rejection Sampling for Gibbs Sampling," Applied Statistics, 
+    Vol. 41, Issue 2, 337-348. The function works for probability density 
+    functions that are log-concave. The algorithm builds envelope functions 
+    for sampling. 
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports:
+    rootSolve (>= 1.7),
+    ggplot2 (>= 3.0.0),
+    R6 (>= 2.2.2)
+Suggests:
+  testthat (>= 2.0.0)
+Date: '2018-12-12'
+URL: https://github.com/andrea2910/ars
+RoxygenNote: 6.1.1
