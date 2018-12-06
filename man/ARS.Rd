@@ -6,7 +6,7 @@
 \title{Class providing object with methods for communication with R6}
 \format{\code{\link{R6Class}} object.}
 \usage{
-ARS
+example <- ARS$new(funx=dnorm, D=c(-Inf, Inf))
 }
 \arguments{
 \item{funx}{a function we want to sample from}

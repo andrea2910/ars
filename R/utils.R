@@ -1,6 +1,3 @@
-library(rootSolve)
-
-
 #' @title check_positive
 #' @description Check whether a given function is only positive
 #' @param f a function to check whether it is positive on the y axis
@@ -9,6 +6,7 @@ library(rootSolve)
 #' @return a boolean TRUE or FALSE. A TRUE means the function is only positive
 #' @examples
 #' check_positive(dnorm, -5, 5)
+#' @export
 check_positive = function(f, var_min, var_max) {
   # quick checks
   if (class(f) != "function")
@@ -74,6 +72,7 @@ check_positive = function(f, var_min, var_max) {
 #' @return a numeric value that represents the derivative at a certain point
 #' @examples
 #' calc_deriv(5, dnorm, -5, 5, mean=5, sd=1)
+#' @export
 calc_deriv = function(x, f, lower, upper, ...) {
   if(class(f) != "function") stop("f must be a function")
   if(class(x) != "numeric") stop("x must be a number")
@@ -107,6 +106,7 @@ calc_deriv = function(x, f, lower, upper, ...) {
 #' @param f represent f(x)
 #' @param x x points
 #' @return a boolean TRUE or FALSE. A TRUE means the function is concave
+#' @export
 #' @examples
 #' log_f <- function(x) log(dnorm(x))
 #' x <- seq(-3, 3, by=1)
@@ -139,6 +139,7 @@ check_interpolconcave = function(x, f) {
 #' y <- log_f(x)
 #' u <- create_upphull(x, y)
 #' u(0)
+#' @export
 create_upphull = function(x, f) {
   if (length(x) != length(f)) {
     stop('Length of x and f should be equal.')
@@ -171,6 +172,7 @@ create_upphull = function(x, f) {
 #' y <- log_f(x)
 #' l <- create_lowhull(x, y)
 #' l(0)
+#' @export
 create_lowhull = function(x, f) {
   if (length(x) != length(f)) {
     stop('Length of x and f should be equal.')
@@ -201,6 +203,7 @@ create_lowhull = function(x, f) {
 #' @param hyprim_l h'(y_l)
 #' @param hyprim_r h'(y_r)
 #' @return a namedVector object with names=z and values=uz
+#' @export
 calc_uz = function(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r) {
   z = y_l + (hy_l - hy_r + (y_r - y_l) * hyprim_r) / (hyprim_r - hyprim_l)
   uz = hy_l + (z - y_l) * hyprim_l
@@ -215,6 +218,7 @@ calc_uz = function(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r) {
 #' @param x x points
 #' @param y may represent different y values from f(x)
 #' @return a function that calculates the lowerhull for a function
+#' @export
 integ_expinterpol = function(x, f, y = x) {
   # detail: given (x1,f1) and (x2,f2), ax+b is the line that goes through both of the two points,
   ## this function calculates I_y1y2 = Int_x1^x2 exp(ax+b) for each interval (y1,y2), and stores them in

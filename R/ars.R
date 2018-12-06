@@ -1,9 +1,9 @@
-library(R6)
 
 #' Class providing object with methods for communication with R6
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @export
 #' @return Object of \code{\link{R6Class}} with methods to manipulate object
 #' @format \code{\link{R6Class}} object.
 #' @examples
@@ -83,7 +83,9 @@ namedVector = R6Class(
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @export
 #' @return Object of \code{\link{R6Class}} with methods to generate adaptive rejection sampling
+#' @usage example <- ARS$new(funx=dnorm, D=c(-Inf, Inf))
 #' @param funx a function we want to sample from
 #' @param D a vector of length 2 of numbers for bounds of function
 #' @format \code{\link{R6Class}} object.
@@ -600,3 +602,5 @@ ARS = R6Class(
     x = c()
   )
 )
+
+
