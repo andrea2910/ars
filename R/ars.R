@@ -4,7 +4,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @export
-#' @return Object of \code{\link{R6Class}} with methods to manipulate object
+#' @return Object of \code{\link{R6Class}} with methods to manipulate data points
 #' @format \code{\link{R6Class}} object.
 #' @examples
 #' ex <- namedVector$new(names = c(1,2,3), values = c(4,5,6))
@@ -35,10 +35,11 @@ namedVector = R6Class(
       duplicated_ind = duplicated(nams)
       nams = nams[!duplicated_ind]
       vals = vals[!duplicated_ind]
-      # delete names in nams taht are already in self$names
+      # delete names in nams that are already in self$names
       index_names = !(nams %in% self$names)
       nams = nams[index_names]
       vals = vals[index_names]
+
       # add
       self$names = c(self$names, nams)
       self$values = c(self$values, vals)
@@ -51,9 +52,7 @@ namedVector = R6Class(
         stop('For now this method only functions when names are unique.')
       }
       index = match(nams, self$names)
-      if (NA %in% index) {
-        stop("Couldn\'t find some of the passed names.")
-      }
+      index = index[!is.na(index)] # drop NAs
       self$names = self$names[-index]
       self$values = self$values[-index]
     },
@@ -79,6 +78,7 @@ namedVector = R6Class(
   )
 )
 
+
 #' Class providing object with methods for communication with R6
 #'
 #' @docType class
@@ -93,7 +93,7 @@ namedVector = R6Class(
 #' ex <- ARS$new(dnorm, c(-Inf,Inf),mean=3, sd=1)
 #' samples <- ex$sample(n=2000)
 #' ex$plot_samples()
-#' @field self$f Function we want to sample from
+#' @field self$f Desnity function we want to sample from
 #' @field self$var_max Upper bound on function we want to sample from
 #' @field self$var_min Lower bound on function we want to sample from
 #' @field private$h_prims A R6 namedVector that contains h'(x)
@@ -113,7 +113,7 @@ namedVector = R6Class(
 #'   \item{\code{sample(n)}}{This method samples n points from using adaptive rejection sampling}}
 #' @section Private Methods:
 #' \describe{
-#'   \item{\code{h(x)}}{This method calculates the log of our funcx at a given point x}
+#'   \item{\code{h(x)}}{This method calculates the log of our funx at a given point x}
 #'   \item{\code{init_hprim()}}{This method intializes our hprim values}
 #'   \item{\code{init_hval()}}{This method initalizes our h values}
 #'   \item{\code{init_scdf(}}{This method initalizes our cdf under the upper hull}
@@ -122,7 +122,7 @@ namedVector = R6Class(
 #'   \item{\code{l(p)}}{This method is a function that returns the slope of a lowerhull line given a point p}
 #'   \item{\code{u(p)}}{This method is a function that returns the slope of a upperhull line given a point p}
 #'   \item{\code{sampl_exph(}}{This method samples from our exp(h values)}
-#'   \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables if we reject a sample x_star}}
+#'   \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables after an interation}}
 ARS = R6Class(
   "ARS",
   lock_objects = FALSE,
@@ -136,8 +136,9 @@ ARS = R6Class(
       if (class(funx) != "function")
         stop("funx must be a function")
 
-      if(is.nan(funx(D[1]) | is.nan(funx(D[2]))))
-        stop("Function is not defined at bounds")
+      if(is.nan(funx(D[1] + .Machine$double.eps, ...)) |
+         is.nan(funx(D[2] - .Machine$double.eps,...)))
+        stop("Function is not defined at bounds") #add small noise for continuous variables
 
 
       f = function(x)
@@ -154,9 +155,11 @@ ARS = R6Class(
 
       # check if the input function is valid
       # note: anything else to check here?
-      if (!check_positive(f, var_min, var_max)) {
-        stop('Input function is not positive in the given support.')
-      }
+      # ignore because code depends on picking rarndom point with negative
+      # if (!check_positive(f, var_min + .Machine$double.eps,
+      #                     var_max - .Machine$double.eps)) {
+      #   stop('Input function is not positive in the given support.')
+      # }
 
       Int_f = integrate(Vectorize(f), lower = var_min, upper =
                           var_max)
@@ -192,7 +195,8 @@ ARS = R6Class(
 
     # main function. sample points from distribution
     sample = function(n = 1000) {
-      start_npts = as.integer(n ^ (1 / 10)) + 1
+      #start_npts = as.integer(n ^ (1 / 10)) + 1
+      start_npts = 2
       # note: this is just an example of choosing the number of starting points
 
       # sample starting points
@@ -220,13 +224,15 @@ ARS = R6Class(
       # construct the unnormalized cdf of s and everything needed for the construction,
       ## which is everything that is related to the upper hull
       private$y <- sort(private$y)
-      private$init_scdf()
-      private$construct()
 
       # sample and update
       private$x = vector(mode = 'numeric', length = n)
       samp = 0
       loop = 0
+
+      private$init_scdf()
+      private$construct()
+
       while (samp < n && loop < 10 * n) {
         # note: l is the number of loops conducted.
         ## This is just an example of the criterion to stop the loop.
@@ -234,7 +240,6 @@ ARS = R6Class(
         ## sample ##
         x_star = private$samp_exph()
         u_star = runif(1)
-
 
         if (u_star <= exp(private$l(x_star) - private$u(x_star))) {
           samp = samp + 1
@@ -279,6 +284,22 @@ ARS = R6Class(
       ggplot() + geom_line(aes(x = xs, y = ys)) + theme_bw() +
         ggtitle("S distribution") + xlab("x") +
         ylab("P(S(X)=x)")
+
+    },
+
+    plot_u_l = function(){
+      self$calc_sampdist()
+      xs <-
+        seq(private$y[1], private$y[length(private$y)],
+            length.out = 100)
+        #seq(-15, 15, by=0.25)
+      ys_u <- sapply(xs, private$u)
+      ys_l <- sapply(xs, private$l)
+
+      ggplot() + geom_line(aes(x=xs, y=ys_l), color="red") + theme_bw() +
+        geom_line(aes(x=xs, y=ys_u), color="blue") +
+        ggtitle("S and U distribution") +
+        xlab("x") + ylab("values")
 
     },
     # print = function(){
@@ -365,6 +386,7 @@ ARS = R6Class(
     # initialize upper hull
     init_u = function() {
       # set points
+
       m = length(private$y)
       y = private$y
       # set h values
@@ -374,16 +396,22 @@ ARS = R6Class(
       private$init_hprim()
       hy_prim = private$h_prims$values
       # calculate Z
-      uz = calc_uz(y[1:(m - 1)], y[2:m], hy[1:(m - 1)], hy[2:m], hy_prim[1:(m -
-                                                                              1)], hy_prim[2:m])
+
+      u_z = calc_uz(y[1:(m - 1)], y[2:m],
+                   hy[1:(m - 1)], hy[2:m],
+                   hy_prim[1:(m -1)], hy_prim[2:m])
+
+      if(is.nan(u_z$names) | is.infinite(u_z$names)) u_z <- namedVector$new(mean(y), mean(hy))
+
       # check concavity
-      u_pts = c(y[1], uz$names, y[m])
-      u_vals = c(hy[1], uz$values, hy[m])
+      u_pts = c(y[1], u_z$names, y[m])
+      u_vals = c(hy[1], u_z$values, hy[m])
+
       if (!check_interpolconcave(u_pts, u_vals)) {
         stop('Input function is not log-concave.')
       }
       # (re)initialize z
-      private$z = uz$names
+      private$z = u_z$names
       # (re)initialize upper hull values
       private$u_vals = namedVector$new(names = u_pts, values =
                                          u_vals)
@@ -400,7 +428,7 @@ ARS = R6Class(
       # (re)initialize cdf
       cdf_pts = c(self$var_min, private$z, self$var_max)
       private$s_cdfs = integ_expinterpol(u_pts, u_vals, cdf_pts)
-      # should it have 3?
+
     },
 
     # construct function u and l
@@ -430,14 +458,14 @@ ARS = R6Class(
                                                            1] - u_pts[interv])
       b = u_vals[interv] - a * u_pts[interv]
 
-      n_test = length(cdf_pts)
-      a_test = (u_vals[2:n_test] - u_vals[1:(n_test - 1)]) / (u_pts[2:n_test] - u_pts[1:(n_test -
-                                                                                           1)])
-      b_test = u_vals[1:(n_test - 1)] - a_test * u_pts[1:(n_test -
-                                                            1)]
 
-      (log(a * (rand - cdf) + exp(a * cdf_pts[interv] + b)) - b) /
-        a
+      samp_pt = (log(a * (rand - cdf) + exp(a * cdf_pts[interv] + b)) - b) / a
+
+      if (is.nan(samp_pt) | is.infinite(samp_pt)) {
+        samp_pt = ((rand - cdf) + exp(b) * cdf_pts[interv]) / exp(b)
+      }
+
+      samp_pt
     },
 
     # essential function 2 of main function: update
@@ -455,11 +483,14 @@ ARS = R6Class(
       if (int == 0) {
         # calculate new z
         u_z = calc_uz(y,
-                      private$y[1],
-                      hy,
-                      private$h_vals$values[1],
-                      hy_prim,
-                      private$h_prims$values[1])
+                             private$y[1],
+                             hy,
+                             private$h_vals$values[1],
+                             hy_prim,
+                             private$h_prims$values[1])
+        quick_check = is.nan(u_z$names) | is.infinite(u_z$names)
+        if(sum(quick_check)>0) return()
+
         z_new = u_z$names
         uz_new = u_z$values
         # check concavity
@@ -467,7 +498,7 @@ ARS = R6Class(
         uvals_new$delete_byname(private$y[1])
         uvals_new$add(c(y, z_new), c(hy, uz_new))
         uvals_new$sort_byname()
-        if (!check_interpolconcave(uvals_new$names, uvals_new$values)) {
+        if (!check_interpolconcave(uvals_new$names, uvals_new$values)){
           stop('Input function is not log-concave.')
         }
         # calculate new cdf
@@ -476,6 +507,7 @@ ARS = R6Class(
         interv_pts = c(self$var_min, z_new, private$z[1])
 
         scdf_new = integ_expinterpol(calc_pts, calc_vals, interv_pts)
+
         # update s_cdfs
         private$s_cdfs$delete_byname(private$z[1])
         private$s_cdfs$add(scdf_new$names, scdf_new$values)
@@ -488,12 +520,17 @@ ARS = R6Class(
         private$z = sort(c(private$z, z_new))
       } else if (int == l_y) {
         # calculate new z
+
         u_z = calc_uz(private$y[l_y],
                       y,
-                      private$h_vals[l_y],
+                      private$h_vals$values[l_y],
                       hy,
-                      private$h_prims[l_y],
+                      private$h_prims$values[l_y],
                       hy_prim)
+
+        quick_check = is.nan(u_z$names) | is.infinite(u_z$names)
+        if(sum(quick_check)>0) return()
+
         z_new = u_z$names
         uz_new = u_z$values
         # check concavity
@@ -533,6 +570,10 @@ ARS = R6Class(
         hyprim_r = c(hy_prim, private$h_prims$values[int + 1])
 
         u_z = calc_uz(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r)
+
+        quick_check = is.nan(u_z$names) | is.infinite(u_z$names)
+        if(sum(quick_check)>0) return()
+
         z_new = u_z$names
         uz_new = u_z$values
 
@@ -554,11 +595,9 @@ ARS = R6Class(
 
         interv_pts = c(private$s_cdfs$names[int], z_new, private$s_cdfs$names[int +
                                                                                 2])
-
         scdf_new = integ_expinterpol(calc_pts, calc_vals, interv_pts)
         # update s_cdf
-        private$s_cdfs$delete_byname(private$s_cdfs$names[(int +
-                                                             1):(int + 2)])
+        private$s_cdfs$delete_byname(private$s_cdfs$names[(int + 1):(int + 2)])
         private$s_cdfs$add(scdf_new$names, scdf_new$values)
         private$s_cdfs$sort_byname()
         # update u_vals
@@ -606,5 +645,3 @@ ARS = R6Class(
     x = c()
   )
 )
-
-

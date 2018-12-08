@@ -37,7 +37,7 @@ check_positive = function(f, var_min, var_max) {
 
   # update var_min and var_max if var_min or var_max is infinite
   if (is.infinite(var_min))
-    var_min = -10 ^ 8
+    var_min = - 10 ^ 8
   if (is.infinite(var_max))
     var_max = 10 ^ 8
 
@@ -54,16 +54,13 @@ check_positive = function(f, var_min, var_max) {
       return(TRUE) # if f_var_min is positive, then we return TRUE
     if (f_var_min <= 0)
       return(FALSE) # if it isn't, then we return FASLE
-  } else{
-    if (sum(results == 0) == 0)
-      return(TRUE) # sum up booleans
-    else
+  } else{ # if there are roots found
       return(FALSE)
   }
 }
 
 #' @title calc_deriv
-#' @description Calculate the derivative of function f: f'(x)
+#' @description Calculate the derivative of function f: f'(x) with an increment of machine epsilon
 #' @param x a specific x point to find the derivative at
 #' @param f a function to calculate the derivative of
 #' @param lower the lower bound domain to check with f
@@ -80,7 +77,8 @@ calc_deriv = function(x, f, lower, upper, ...) {
   if(class(lower) != "numeric") stop("lower must be a number")
   if(class(upper) != "numeric") stop("upper must be a number")
 
-  eps <- (.Machine$double.eps) ^ (1 / 4) # find a small difference value
+  eps <- (.Machine$double.eps) ^ (1 / 4) * abs(x) # find a small difference value
+
   d <- NA
   if (x == lower)
     d <- (f(x + eps, ...) - f(x, ...)) / eps
@@ -102,7 +100,7 @@ calc_deriv = function(x, f, lower, upper, ...) {
 
 #' @title check_interpolconcave
 #' @description given a (sorted) set of points,
-#' check if the interpolating function is concave
+#' check if the interpolating function is concave he function will loop through all points in x and calculate the interpolated value
 #' @param f represent f(x)
 #' @param x x points
 #' @return a boolean TRUE or FALSE. A TRUE means the function is concave
@@ -116,14 +114,17 @@ check_interpolconcave = function(x, f) {
   if (length(x) != length(f)) {
     stop('Length of x and f should be equal.')
   }
-  sig = TRUE
-  for (i in 1:(length(x) - 2)) {
-    inter_f = f[i] + (x[i + 1] - x[i]) * (f[i + 2] - f[i]) / (x[i + 2] - x[i])
-    if (inter_f > f[i + 1]) {
-      sig = FALSE
-      break
+  if(class(x)!="numeric") stop("Input must be numeric")
+  if(class(f)!="numeric") stop("Input must be numeric")
+
+  sig <- TRUE
+    for (i in 1:(length(x) - 2)) {
+      inter_f = f[i] + (x[i + 1] - x[i]) * (f[i + 2] - f[i]) / (x[i + 2] - x[i])
+      if (inter_f > f[i + 1] + .Machine$double.eps*abs(f[i+1])) {
+        sig <- FALSE
+        break
+      }
     }
-  }
   sig
 }
 
@@ -148,7 +149,6 @@ create_upphull = function(x, f) {
   u = function(p) {
     val = NA
     j = findInterval(p, x)
-
     if (j == 0) {
       val = f[1] + (p - x[1]) * (f[2] - f[1]) / (x[2] - x[1])
     } else if (j == k) {
@@ -184,7 +184,7 @@ create_lowhull = function(x, f) {
     if (j == 0) {
       val = -Inf
     } else if (j == k) {
-      val = Inf
+      val = -Inf
     } else {
       val = f[j] + (p - x[j]) * (f[j + 1] - f[j]) / (x[j + 1] - x[j])
     }
@@ -195,7 +195,7 @@ create_lowhull = function(x, f) {
 
 
 #' @title calc_uz
-#' @description calculate the z points given a (sorted) set of points and their h values and h_prim values
+#' @description calculate the z points (or intersection between the tangent lines at given points) given a (sorted) set of points and their h values and h_prim values
 #' @param y_l y points to the left
 #' @param y_r y points to the right
 #' @param hy_l h(y_l) values
@@ -205,9 +205,17 @@ create_lowhull = function(x, f) {
 #' @return a namedVector object with names=z and values=uz
 #' @export
 calc_uz = function(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r) {
-  z = y_l + (hy_l - hy_r + (y_r - y_l) * hyprim_r) / (hyprim_r - hyprim_l)
+  z = y_l + (hy_l - hy_r + (y_r - y_l) * hyprim_r) / round(hyprim_r - hyprim_l, 8)
   uz = hy_l + (z - y_l) * hyprim_l
 
+
+  #update_these = is.nan(z) | is.infinite(z)
+  # if(sum(update_these)>0){
+  #   z[update_these] <- (y_l[update_these] + y_r[update_these])/2
+  #   uz[update_these] <- (hy_l[update_these] + hy_r[update_these])/2
+  # }
+
+  #return(list(namedVector$new(z, uz), update_these))
   namedVector$new(z, uz)
 }
 
@@ -241,6 +249,10 @@ integ_expinterpol = function(x, f, y = x) {
   a = (f_r - f_l) / (x_r - x_l)
   b = f_l - a * x_l
   vals = (exp(a * y_r + b) - exp(a * y_l + b)) / a
+
+  ind = is.infinite(vals) | is.nan(vals)
+  vals[ind] = exp(b) * (y_r[ind] - y_l[ind])
+
 
   namedVector$new(names = y, values = c(0, vals))
 }

@@ -15,6 +15,8 @@ test_that("namedVector breaks with incorrect input",{
 
 test_that("output is correct",{
   expect_length(ARS$new(dnorm, mean=5, sd=2)$sample(n=100), 100)
+  expect_length(ARS$new(dexp, rate=2)$sample(n=100), 100)
+  expect_length(ARS$new(dunif)$sample(n=100), 100)
 })
 
 test_that("helper functions are correct",{

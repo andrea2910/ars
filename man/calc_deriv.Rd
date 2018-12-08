@@ -21,7 +21,7 @@ calc_deriv(x, f, lower, upper, ...)
 a numeric value that represents the derivative at a certain point
 }
 \description{
-Calculate the derivative of function f: f'(x)
+Calculate the derivative of function f: f'(x) with an increment of machine epsilon
 }
 \examples{
 calc_deriv(5, dnorm, -5, 5, mean=5, sd=1)

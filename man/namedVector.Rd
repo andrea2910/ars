@@ -9,7 +9,7 @@
 namedVector
 }
 \value{
-Object of \code{\link{R6Class}} with methods to manipulate object
+Object of \code{\link{R6Class}} with methods to manipulate data points
 }
 \description{
 Class providing object with methods for communication with R6

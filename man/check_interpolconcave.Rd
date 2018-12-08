@@ -16,7 +16,7 @@ a boolean TRUE or FALSE. A TRUE means the function is concave
 }
 \description{
 given a (sorted) set of points,
-check if the interpolating function is concave
+check if the interpolating function is concave he function will loop through all points in x and calculate the interpolated value
 }
 \examples{
 log_f <- function(x) log(dnorm(x))

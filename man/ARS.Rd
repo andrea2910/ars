@@ -22,7 +22,7 @@ Class providing object with methods for communication with R6
 \section{Fields}{
 
 \describe{
-\item{\code{self$f}}{Function we want to sample from}
+\item{\code{self$f}}{Desnity function we want to sample from}
 
 \item{\code{self$var_max}}{Upper bound on function we want to sample from}
 
@@ -57,7 +57,7 @@ Class providing object with methods for communication with R6
 \section{Private Methods}{
 
 \describe{
-  \item{\code{h(x)}}{This method calculates the log of our funcx at a given point x}
+  \item{\code{h(x)}}{This method calculates the log of our funx at a given point x}
   \item{\code{init_hprim()}}{This method intializes our hprim values}
   \item{\code{init_hval()}}{This method initalizes our h values}
   \item{\code{init_scdf(}}{This method initalizes our cdf under the upper hull}
@@ -66,7 +66,7 @@ Class providing object with methods for communication with R6
   \item{\code{l(p)}}{This method is a function that returns the slope of a lowerhull line given a point p}
   \item{\code{u(p)}}{This method is a function that returns the slope of a upperhull line given a point p}
   \item{\code{sampl_exph(}}{This method samples from our exp(h values)}
-  \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables if we reject a sample x_star}}
+  \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables after an interation}}
 }
 
 \examples{

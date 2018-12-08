@@ -23,5 +23,5 @@ calc_uz(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r)
 a namedVector object with names=z and values=uz
 }
 \description{
-calculate the z points given a (sorted) set of points and their h values and h_prim values
+calculate the z points (or intersection between the tangent lines at given points) given a (sorted) set of points and their h values and h_prim values
 }
