@@ -55,6 +55,8 @@ ARS = R6Class(
       if (class(funx) != "function")
         stop("funx must be a function")
 
+      if(class(D)!="numeric") stop("D or dimensions must be number.")
+
       if(is.nan(funx(D[1] + .Machine$double.eps, ...)) |
          is.nan(funx(D[2] - .Machine$double.eps,...)))
         stop("Function is not defined at bounds") #add small noise for continuous variables
