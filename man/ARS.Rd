@@ -47,9 +47,9 @@ Class providing object with methods for communication with R6
 
 \describe{
   \item{\code{f(x)}}{This method calculates our funx observation at a given x }
-  \item{\code{plot_sampdist()}}{This method plots our envelope function }
+  \item{\code{plot_sampdist()}}{This method plots our normalized envelope function }
   \item{\code{calc_sampdist()}}{This method calculates the sampling distribution from a uniform distribution}
-  \item{\code{plot_samples()}}{This method plots our samples in a histogram}
+  \item{\code{plot_samples()}}{This method plots our samples in a histogramm, with a blue line highlighting the median value}
   \item{\code{s()}}{This method calculates the envelope or sampling function }
   \item{\code{sample(n)}}{This method samples n points from using adaptive rejection sampling}}
 }
@@ -60,12 +60,12 @@ Class providing object with methods for communication with R6
   \item{\code{h(x)}}{This method calculates the log of our funx at a given point x}
   \item{\code{init_hprim()}}{This method intializes our hprim values}
   \item{\code{init_hval()}}{This method initalizes our h values}
-  \item{\code{init_scdf(}}{This method initalizes our cdf under the upper hull}
+  \item{\code{init_scdf()}}{This method initalizes our cdf under the upper hull}
   \item{\code{init_u()}}{This method initializes our upper hull values}
   \item{\code{init_y()}}{This method initalizes our y values }
   \item{\code{l(p)}}{This method is a function that returns the slope of a lowerhull line given a point p}
   \item{\code{u(p)}}{This method is a function that returns the slope of a upperhull line given a point p}
-  \item{\code{sampl_exph(}}{This method samples from our exp(h values)}
+  \item{\code{sampl_exph()}}{This method samples from our exp(h values)}
   \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables after an interation}}
 }
 

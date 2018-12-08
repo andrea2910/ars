@@ -1,84 +1,3 @@
-
-#' Class providing object with methods for communication with R6
-#'
-#' @docType class
-#' @importFrom R6 R6Class
-#' @export
-#' @return Object of \code{\link{R6Class}} with methods to manipulate data points
-#' @format \code{\link{R6Class}} object.
-#' @examples
-#' ex <- namedVector$new(names = c(1,2,3), values = c(4,5,6))
-#' @field names Stores points
-#' @field values Stores y values associated with points
-#' @section Methods:
-#' \describe{
-#'   \item{\code{add(nams, vals)}}{This method adds names and values to the \code{namedVector}}
-#'
-#'   \item{\code{delete_byname(nams)}}{This method deletes both the name and value of inputted nams from \code{namedVector}}
-#'   \item{\code{sort_byname(decreasing=FALSE)}}{This method sorts the \code{namedVector} by name values.}}
-namedVector = R6Class(
-  "namedVector",
-  lock_objects = FALSE,
-  public = list(
-    ### functions ###
-    # initialization
-    initialize = function(names, values) {
-      if (length(names) != length(values)) {
-        stop('Length of names and values should be equal.')
-      }
-      self$names = names
-      self$values = values
-    },
-
-    add = function(nams, vals) {
-      # delete repeated names in nams
-      duplicated_ind = duplicated(nams)
-      nams = nams[!duplicated_ind]
-      vals = vals[!duplicated_ind]
-      # delete names in nams that are already in self$names
-      index_names = !(nams %in% self$names)
-      nams = nams[index_names]
-      vals = vals[index_names]
-
-      # add
-      self$names = c(self$names, nams)
-      self$values = c(self$values, vals)
-    },
-
-    # delete an element by name
-    delete_byname = function(nams) {
-      if (length(levels(factor(self$names))) != length(self$names) ||
-          length(levels(factor(self$nams))) != length(self$nams)) {
-        stop('For now this method only functions when names are unique.')
-      }
-      index = match(nams, self$names)
-      index = index[!is.na(index)] # drop NAs
-      self$names = self$names[-index]
-      self$values = self$values[-index]
-    },
-
-    # sort namedVector by name
-    sort_byname = function(decreasing = FALSE) {
-      if (length(levels(factor(self$names))) != length(self$names)) {
-        stop('For now this method only functions when names are unique.')
-      }
-      sorted_names = sort(self$names, decreasing = decreasing)
-      sorted_values = self$values
-      for (i in 1:length(sorted_names)) {
-        index = match(sorted_names[i], self$names)
-        sorted_values[i] = self$values[index]
-      }
-      self$names = sorted_names
-      self$values = sorted_values
-    },
-
-    ### variables ###
-    names = c(),
-    values = c()
-  )
-)
-
-
 #' Class providing object with methods for communication with R6
 #'
 #' @docType class
@@ -91,7 +10,7 @@ namedVector = R6Class(
 #' @format \code{\link{R6Class}} object.
 #' @examples
 #' ex <- ARS$new(dnorm, c(-Inf,Inf),mean=3, sd=1)
-#' samples <- ex$sample(n=2000)
+#' samples <- ex$sample(n=1000)
 #' ex$plot_samples()
 #' @field self$f Desnity function we want to sample from
 #' @field self$var_max Upper bound on function we want to sample from
@@ -106,9 +25,9 @@ namedVector = R6Class(
 #' @section Public Methods:
 #' \describe{
 #'   \item{\code{f(x)}}{This method calculates our funx observation at a given x }
-#'   \item{\code{plot_sampdist()}}{This method plots our envelope function }
+#'   \item{\code{plot_sampdist()}}{This method plots our normalized envelope function }
 #'   \item{\code{calc_sampdist()}}{This method calculates the sampling distribution from a uniform distribution}
-#'   \item{\code{plot_samples()}}{This method plots our samples in a histogram}
+#'   \item{\code{plot_samples()}}{This method plots our samples in a histogramm, with a blue line highlighting the median value}
 #'   \item{\code{s()}}{This method calculates the envelope or sampling function }
 #'   \item{\code{sample(n)}}{This method samples n points from using adaptive rejection sampling}}
 #' @section Private Methods:
@@ -116,12 +35,12 @@ namedVector = R6Class(
 #'   \item{\code{h(x)}}{This method calculates the log of our funx at a given point x}
 #'   \item{\code{init_hprim()}}{This method intializes our hprim values}
 #'   \item{\code{init_hval()}}{This method initalizes our h values}
-#'   \item{\code{init_scdf(}}{This method initalizes our cdf under the upper hull}
+#'   \item{\code{init_scdf()}}{This method initalizes our cdf under the upper hull}
 #'   \item{\code{init_u()}}{This method initializes our upper hull values}
 #'   \item{\code{init_y()}}{This method initalizes our y values }
 #'   \item{\code{l(p)}}{This method is a function that returns the slope of a lowerhull line given a point p}
 #'   \item{\code{u(p)}}{This method is a function that returns the slope of a upperhull line given a point p}
-#'   \item{\code{sampl_exph(}}{This method samples from our exp(h values)}
+#'   \item{\code{sampl_exph()}}{This method samples from our exp(h values)}
 #'   \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables after an interation}}
 ARS = R6Class(
   "ARS",
@@ -152,14 +71,6 @@ ARS = R6Class(
 
       if (var_min == var_max)
         stop("Input dimension must differ")
-
-      # check if the input function is valid
-      # note: anything else to check here?
-      # ignore because code depends on picking rarndom point with negative
-      # if (!check_positive(f, var_min + .Machine$double.eps,
-      #                     var_max - .Machine$double.eps)) {
-      #   stop('Input function is not positive in the given support.')
-      # }
 
       Int_f = integrate(Vectorize(f), lower = var_min, upper =
                           var_max)
@@ -296,9 +207,10 @@ ARS = R6Class(
       ys_u <- sapply(xs, private$u)
       ys_l <- sapply(xs, private$l)
 
-      ggplot() + geom_line(aes(x=xs, y=ys_l), color="red") + theme_bw() +
-        geom_line(aes(x=xs, y=ys_u), color="blue") +
-        ggtitle("S and U distribution") +
+      ggplot() + geom_line(aes(x=xs, y=ys_l, colour="lower hull")) + theme_bw() +
+        geom_line(aes(x=xs, y=ys_u, colour="upper hull")) +
+        scale_colour_discrete("")  +
+        ggtitle("Upper and Lower Hull distribution") +
         xlab("x") + ylab("values")
 
     },

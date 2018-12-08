@@ -1,63 +1,82 @@
-#' @title check_positive
-#' @description Check whether a given function is only positive
-#' @param f a function to check whether it is positive on the y axis
-#' @param var_min the lower bound domain to check with f
-#' @param var_max the upper bound domain to check with f
-#' @return a boolean TRUE or FALSE. A TRUE means the function is only positive
-#' @examples
-#' check_positive(dnorm, -5, 5)
+
+#' Class providing object with methods for communication with R6
+#'
+#' @docType class
+#' @importFrom R6 R6Class
 #' @export
-check_positive = function(f, var_min, var_max) {
-  # quick checks
-  if (class(f) != "function")
-    stop("f is not a function")
+#' @return Object of \code{\link{R6Class}} with methods to manipulate data points
+#' @format \code{\link{R6Class}} object.
+#' @examples
+#' ex <- namedVector$new(names = c(1,2,3), values = c(4,5,6))
+#' @field names Stores points
+#' @field values Stores y values associated with points
+#' @section Methods:
+#' \describe{
+#'   \item{\code{add(nams, vals)}}{This method adds names and values to the \code{namedVector}}
+#'
+#'   \item{\code{delete_byname(nams)}}{This method deletes both the name and value of inputted nams from \code{namedVector}}
+#'   \item{\code{sort_byname(decreasing=FALSE)}}{This method sorts the \code{namedVector} by name values.}}
+namedVector = R6Class(
+  "namedVector",
+  lock_objects = FALSE,
+  public = list(
+    ### functions ###
+    # initialization
+    initialize = function(names, values) {
+      if (length(names) != length(values)) {
+        stop('Length of names and values should be equal.')
+      }
+      self$names = names
+      self$values = values
+    },
 
-  if (class(var_min) != "numeric" |
-      length(var_min) != 1)
-    stop("var_min is not numeric or not length 1")
+    add = function(nams, vals) {
+      # delete repeated names in nams
+      duplicated_ind = duplicated(nams)
+      nams = nams[!duplicated_ind]
+      vals = vals[!duplicated_ind]
+      # delete names in nams that are already in self$names
+      index_names = !(nams %in% self$names)
+      nams = nams[index_names]
+      vals = vals[index_names]
 
-  if (class(var_max) != "numeric" |
-      length(var_max) != 1)
-    stop("var_max is not numeric or not length 1")
+      # add
+      self$names = c(self$names, nams)
+      self$values = c(self$values, vals)
+    },
 
-  # choose any point in interval (var_min, var_max)
-  # and check whether it is negative
-  test_pts = max(var_max - 1, var_min)
-  if (f(test_pts) < 0)
-    return(FALSE)
+    # delete an element by name
+    delete_byname = function(nams) {
+      if (length(levels(factor(self$names))) != length(self$names) ||
+          length(levels(factor(self$nams))) != length(self$nams)) {
+        stop('For now this method only functions when names are unique.')
+      }
+      index = match(nams, self$names)
+      index = index[!is.na(index)] # drop NAs
+      self$names = self$names[-index]
+      self$values = self$values[-index]
+    },
 
-  # find f function values at boundaries
-  f_var_min <- f(var_min)
-  f_var_max <- f(var_max)
+    # sort namedVector by name
+    sort_byname = function(decreasing = FALSE) {
+      if (length(levels(factor(self$names))) != length(self$names)) {
+        stop('For now this method only functions when names are unique.')
+      }
+      sorted_names = sort(self$names, decreasing = decreasing)
+      sorted_values = self$values
+      for (i in 1:length(sorted_names)) {
+        index = match(sorted_names[i], self$names)
+        sorted_values[i] = self$values[index]
+      }
+      self$names = sorted_names
+      self$values = sorted_values
+    },
 
-  # if the bound values have different signs, then return false
-  # because it must pass through 0
-  if (sign(f_var_min) != sign(f_var_max))
-    return(FALSE)
-
-  # update var_min and var_max if var_min or var_max is infinite
-  if (is.infinite(var_min))
-    var_min = - 10 ^ 8
-  if (is.infinite(var_max))
-    var_max = 10 ^ 8
-
-  # try to find 100 root values between lower and upper
-  results <-
-    try(uniroot.all(Vectorize(f), lower = var_min, upper = var_max))
-
-  if (class(results) == "try-error")
-    stop("Error using uniroot.all. Try different values")
-
-  if (length(results) == 0) {
-    # no roots found
-    if (f_var_min > 0)
-      return(TRUE) # if f_var_min is positive, then we return TRUE
-    if (f_var_min <= 0)
-      return(FALSE) # if it isn't, then we return FASLE
-  } else{ # if there are roots found
-      return(FALSE)
-  }
-}
+    ### variables ###
+    names = c(),
+    values = c()
+  )
+)
 
 #' @title calc_deriv
 #' @description Calculate the derivative of function f: f'(x) with an increment of machine epsilon
