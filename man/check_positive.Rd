@@ -9,9 +9,9 @@ check_positive(f, var_min, var_max)
 \arguments{
 \item{f}{a function to search across}
 
-\item{lower}{the lower bound domain to check with f}
+\item{var_min}{the lower bound domain to check with f}
 
-\item{upper}{the upper bound domain to check with f}
+\item{var_max}{the upper bound domain to check with f}
 }
 \value{
 a boolean value that represents whether a function is only positive

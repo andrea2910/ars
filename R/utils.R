@@ -1,4 +1,3 @@
-
 #' Class providing object with methods for communication with R6
 #'
 #' @docType class
@@ -87,8 +86,8 @@ namedVector = R6Class(
 #' @description Check whether a function has negative values
 #' @importFrom rootSolve uniroot.all
 #' @param f a function to search across
-#' @param lower the lower bound domain to check with f
-#' @param upper the upper bound domain to check with f
+#' @param var_min the lower bound domain to check with f
+#' @param var_max the upper bound domain to check with f
 #' @return a boolean value that represents whether a function is only positive
 #' @examples
 #' check_positive(dnorm, -Inf, Inf)
