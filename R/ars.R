@@ -4,12 +4,12 @@
 #' @importFrom R6 R6Class
 #' @export
 #' @return Object of \code{\link{R6Class}} with methods to generate adaptive rejection sampling
-#' @usage example <- ARS$new(funx=dnorm, D=c(-Inf, Inf))
+#' @usage example <- ars$new(funx=dnorm, D=c(-Inf, Inf))
 #' @param funx a function we want to sample from
 #' @param D a vector of length 2 of numbers for bounds of function
 #' @format \code{\link{R6Class}} object.
 #' @examples
-#' ex <- ARS$new(dnorm, c(-Inf,Inf),mean=3, sd=1)
+#' ex <- ars$new(dnorm, c(-Inf,Inf),mean=3, sd=1)
 #' samples <- ex$sample(n=1000)
 #' ex$plot_samples()
 #' @field self$f Desnity function we want to sample from
@@ -42,8 +42,8 @@
 #'   \item{\code{u(p)}}{This method is a function that returns the slope of a upperhull line given a point p}
 #'   \item{\code{sampl_exph()}}{This method samples from our exp(h values)}
 #'   \item{\code{update(y, hy, hy_prim)}}{This method updates our private variables after an interation}}
-ARS = R6Class(
-  "ARS",
+ars = R6Class(
+  "ars",
   lock_objects = FALSE,
   public = list(
     ### functions ###
