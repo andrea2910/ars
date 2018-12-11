@@ -1,8 +1,8 @@
 library(testthat)
 library(ars)
 
-
-context("ARS passes Kolmogorov-Smirnov Tests for various dist. NOTE may fail rarely. Run many times")
+set.seed(5)
+context("ARS passes Kolmogorov-Smirnov Tests for various dist.")
 
   custom_check <- function(sample1, sample2, alpha=0.05){
     pval <- ks.test(sample1, sample2, alternative="two.sided")$p.value
@@ -12,20 +12,22 @@ context("ARS passes Kolmogorov-Smirnov Tests for various dist. NOTE may fail rar
 
 test_that("ARS passes KS test once", {
 
-  norm_ars <- ARS$new(dnorm)$sample(5000)
-  norm_r <- rnorm(5000)
+  n = 5000
 
-  unif_ars <- ARS$new(dunif, D=c(0,1))$sample(5000)
-  unif_r <- runif(5000)
+  norm_ars <- ARS$new(dnorm)$sample(n)
+  norm_r <- rnorm(n)
 
-  exp_ars <- ARS$new(dexp, D=c(0, 10), rate=2)$sample(n=5000)
-  exp_r <- rexp(5000, rate=2)
+  unif_ars <- ARS$new(dunif, D=c(0,1))$sample(n)
+  unif_r <- runif(n)
 
-  norm_ars_sd50 <- ARS$new(dnorm, mean=1000, sd=50)$sample(5000)
-  norm_r_sd50 <- rnorm(5000, mean=1000, sd=50)
+  exp_ars <- ARS$new(dexp, D=c(0, 10), rate=2)$sample(n=n)
+  exp_r <- rexp(n, rate=2)
 
-  norm_ars_sd10 <- ARS$new(dnorm, mean=10, sd=10)$sample(5000)
-  norm_r_sd10 <- rnorm(5000, mean=10, sd=10)
+  norm_ars_sd50 <- ARS$new(dnorm, mean=1000, sd=50)$sample(n)
+  norm_r_sd50 <- rnorm(n, mean=1000, sd=50)
+
+  norm_ars_sd10 <- ARS$new(dnorm, mean=10, sd=10)$sample(n)
+  norm_r_sd10 <- rnorm(n, mean=10, sd=10)
 
   expect_equal(custom_check(norm_ars, norm_r), TRUE)
   expect_equal(custom_check(norm_ars_sd50, norm_r_sd50), TRUE)
@@ -35,7 +37,7 @@ test_that("ARS passes KS test once", {
 
 })
 
-
+# code below takes too long to run, but idea is the same as above.
 # test_that("ARS passes KS test out 90% of 100 times. n=1000", {
 #
 #   n = 1000
