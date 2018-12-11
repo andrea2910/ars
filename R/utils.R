@@ -40,6 +40,11 @@ namedVector = R6Class(
       nams = nams[index_names]
       vals = vals[index_names]
 
+      # delete values that are NaN
+      #no_nan_ind = !is.nan(vals)
+      #nams = nams[no_nan_ind]
+      #vals = vals[no_nan_ind]
+
       # add
       self$names = c(self$names, nams)
       self$values = c(self$values, vals)
@@ -78,6 +83,45 @@ namedVector = R6Class(
   )
 )
 
+#' @title check_positive
+#' @description Check whether a function has negative values
+#' @importFrom rootSolve uniroot.all
+#' @param f a function to search across
+#' @param lower the lower bound domain to check with f
+#' @param upper the upper bound domain to check with f
+#' @return a boolean value that represents whether a function is only positive
+#' @examples
+#' check_positive(dnorm, -Inf, Inf)
+#' @export
+check_positive = function(f, var_min, var_max) {
+  # choose any point in interval (var_min, var_max)
+  new_f = function(x) f(x) + .Machine$double.eps
+
+  # find root
+  f_var_min <- new_f(var_min)
+  f_var_max <- new_f(var_max)
+
+  if (sign(f_var_min) != sign(f_var_max) || sign(f_var_min) < 1)
+    return(FALSE) # if the bound valeus differ
+
+  # update var_min and var_max because we need bounds
+  if (is.infinite(var_min))
+    var_min = - .Machine$double.xmax
+  if (is.infinite(var_max))
+    var_max = .Machine$double.xmax
+
+  results <-
+    try(uniroot.all(Vectorize(new_f), lower = var_min, upper = var_max))
+  if (class(results) == "try-error")
+    stop("Error using uniroot.all. Try different values")
+  if (length(results) == 0) {
+    # no roots found
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
+
 #' @title calc_deriv
 #' @description Calculate the derivative of function f: f'(x) with an increment of machine epsilon
 #' @param x a specific x point to find the derivative at
@@ -96,15 +140,18 @@ calc_deriv = function(x, f, lower, upper, ...) {
   if(class(lower) != "numeric") stop("lower must be a number")
   if(class(upper) != "numeric") stop("upper must be a number")
 
-  eps <- (.Machine$double.eps) ^ (1 / 4) * abs(x) # find a small difference value
+  # find a small difference value
+  # note: when x is significantly large, we need to have larger eps to avoid underflow
+  eps <- (.Machine$double.eps) ^ (1/4) * max(abs(x)/10e8, 1)
+  if (abs(x) > 10e8)
+    warning("Very hard to get good approximation of the derivatives at this scale.")
 
   d <- NA
-  if (x == lower)
+  if (x >= lower && x <= lower + eps)
     d <- (f(x + eps, ...) - f(x, ...)) / eps
-  else if (x == upper)
+  else if (x <= upper && x >= upper - eps)
     d <-  (f(x, ...) - f (x - eps, ...)) / eps
-  else if (lower <= x &&
-           x <= upper)
+  else if (x > lower + eps && x < upper - eps)
     d <- (f(x + eps, ...) - f(x - eps, ...)) / (2 * eps)
   else
     stop("Out of bounds")
@@ -137,13 +184,13 @@ check_interpolconcave = function(x, f) {
   if(class(f)!="numeric") stop("Input must be numeric")
 
   sig <- TRUE
-    for (i in 1:(length(x) - 2)) {
-      inter_f = f[i] + (x[i + 1] - x[i]) * (f[i + 2] - f[i]) / (x[i + 2] - x[i])
-      if (inter_f > f[i + 1] + .Machine$double.eps*abs(f[i+1])) {
-        sig <- FALSE
-        break
-      }
+  for (i in 1:(length(x) - 2)) {
+    inter_f = f[i] + (x[i + 1] - x[i]) * (f[i + 2] - f[i]) / (x[i + 2] - x[i])
+    if (inter_f > f[i + 1] + .Machine$double.eps*abs(f[i+1])) {
+      sig <- FALSE
+      break
     }
+  }
   sig
 }
 
@@ -227,19 +274,12 @@ calc_uz = function(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r) {
   z = y_l + (hy_l - hy_r + (y_r - y_l) * hyprim_r) / round(hyprim_r - hyprim_l, 8)
   uz = hy_l + (z - y_l) * hyprim_l
 
-
-  #update_these = is.nan(z) | is.infinite(z)
-  # if(sum(update_these)>0){
-  #   z[update_these] <- (y_l[update_these] + y_r[update_these])/2
-  #   uz[update_these] <- (hy_l[update_these] + hy_r[update_these])/2
-  # }
-
-  #return(list(namedVector$new(z, uz), update_these))
   namedVector$new(z, uz)
 }
 
 
 #' @title integ_expinterpol
+#' @importFrom utils head tail
 #' @description integrate the exponential of interpolating function for each interval given a (sorted) set of points
 #' @param f represent f(x)
 #' @param x x points
@@ -270,8 +310,7 @@ integ_expinterpol = function(x, f, y = x) {
   vals = (exp(a * y_r + b) - exp(a * y_l + b)) / a
 
   ind = is.infinite(vals) | is.nan(vals)
-  vals[ind] = exp(b) * (y_r[ind] - y_l[ind])
-
+  vals[ind] = exp(b[ind]) * (y_r[ind] - y_l[ind])
 
   namedVector$new(names = y, values = c(0, vals))
 }

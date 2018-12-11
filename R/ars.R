@@ -61,7 +61,6 @@ ARS = R6Class(
          is.nan(funx(D[2] - .Machine$double.eps,...)))
         stop("Function is not defined at bounds") #add small noise for continuous variables
 
-
       f = function(x)
         funx(x, ...)
 
@@ -70,6 +69,9 @@ ARS = R6Class(
 
       var_min = min(D)
       var_max = max(D)
+
+      if (! check_positive(f, var_min, var_max))
+        stop('Input function is not positive in the given support.')
 
       if (var_min == var_max)
         stop("Input dimension must differ")
@@ -86,7 +88,7 @@ ARS = R6Class(
 
       private$h = function(x) {
         val = f(x)
-        if (val <= 0) {
+        if (val < 0) {
           stop('Input function is not positive in the given support.')
         }
         log(f(x))
@@ -107,7 +109,7 @@ ARS = R6Class(
     },
 
     # main function. sample points from distribution
-    sample = function(n = 1000) {
+    sample = function(n = 1000, squeeze = TRUE) {
       #start_npts = as.integer(n ^ (1 / 10)) + 1
       start_npts = 2
       # note: this is just an example of choosing the number of starting points
@@ -146,19 +148,25 @@ ARS = R6Class(
       private$init_scdf()
       private$construct()
 
+
       while (samp < n && loop < 10 * n) {
         # note: l is the number of loops conducted.
         ## This is just an example of the criterion to stop the loop.
 
         ## sample ##
+
         x_star = private$samp_exph()
         u_star = runif(1)
 
-        if (u_star <= exp(private$l(x_star) - private$u(x_star))) {
+        if (u_star <= exp(private$l(x_star) - private$u(x_star)) && squeeze) {
           samp = samp + 1
           private$x[samp] = x_star
         } else {
           hxstar = private$h(x_star)
+
+          if (hxstar == -Inf)
+            next
+
           hxstar_prim = calc_deriv(x_star, private$h, self$var_min, self$var_max)
           if (u_star <= exp(hxstar - private$u(x_star))) {
             samp = samp + 1
@@ -205,7 +213,7 @@ ARS = R6Class(
       xs <-
         seq(private$y[1], private$y[length(private$y)],
             length.out = 100)
-        #seq(-15, 15, by=0.25)
+      #seq(-15, 15, by=0.25)
       ys_u <- sapply(xs, private$u)
       ys_l <- sapply(xs, private$l)
 
@@ -310,17 +318,22 @@ ARS = R6Class(
       private$init_hprim()
       hy_prim = private$h_prims$values
       # calculate Z
+      y_l = y[1:(m - 1)]
+      y_r = y[2:m]
 
-      u_z = calc_uz(y[1:(m - 1)], y[2:m],
-                   hy[1:(m - 1)], hy[2:m],
-                   hy_prim[1:(m -1)], hy_prim[2:m])
+      u_z = calc_uz(y_l, y_r,
+                    hy[1:(m - 1)], hy[2:m],
+                    hy_prim[1:(m -1)], hy_prim[2:m])
+      # the case where hyprim_l = hyprim_r
+      if(is.nan(u_z$names) | is.infinite(u_z$names))
+        u_z <- namedVector$new(mean(y), mean(hy))
+      # the case where it is not log-concave
+      if(FALSE %in% ((u_z$names - y_l) > 0) || FALSE  %in% ((y_r - u_z$names) > 0))
+        stop('Input function is not log-concave.')
 
-      if(is.nan(u_z$names) | is.infinite(u_z$names)) u_z <- namedVector$new(mean(y), mean(hy))
-
-      # check concavity
       u_pts = c(y[1], u_z$names, y[m])
       u_vals = c(hy[1], u_z$values, hy[m])
-
+      # check concavity
       if (!check_interpolconcave(u_pts, u_vals)) {
         stop('Input function is not log-concave.')
       }
@@ -355,7 +368,6 @@ ARS = R6Class(
       # generate u
       rand = runif(1, min = 0, max = sum(private$s_cdfs$values))
       # find the interval of x where F(x) = u
-
       cumm_cdfs = cumsum(private$s_cdfs$values)
 
       interv = findInterval(rand, cumm_cdfs)
@@ -397,11 +409,11 @@ ARS = R6Class(
       if (int == 0) {
         # calculate new z
         u_z = calc_uz(y,
-                             private$y[1],
-                             hy,
-                             private$h_vals$values[1],
-                             hy_prim,
-                             private$h_prims$values[1])
+                      private$y[1],
+                      hy,
+                      private$h_vals$values[1],
+                      hy_prim,
+                      private$h_prims$values[1])
         quick_check = is.nan(u_z$names) | is.infinite(u_z$names)
         if(sum(quick_check)>0) return()
 
@@ -412,6 +424,7 @@ ARS = R6Class(
         uvals_new$delete_byname(private$y[1])
         uvals_new$add(c(y, z_new), c(hy, uz_new))
         uvals_new$sort_byname()
+
         if (!check_interpolconcave(uvals_new$names, uvals_new$values)){
           stop('Input function is not log-concave.')
         }
@@ -421,7 +434,6 @@ ARS = R6Class(
         interv_pts = c(self$var_min, z_new, private$z[1])
 
         scdf_new = integ_expinterpol(calc_pts, calc_vals, interv_pts)
-
         # update s_cdfs
         private$s_cdfs$delete_byname(private$z[1])
         private$s_cdfs$add(scdf_new$names, scdf_new$values)

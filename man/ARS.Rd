@@ -71,7 +71,7 @@ Class providing object with methods for communication with R6
 
 \examples{
 ex <- ARS$new(dnorm, c(-Inf,Inf),mean=3, sd=1)
-samples <- ex$sample(n=2000)
+samples <- ex$sample(n=1000)
 ex$plot_samples()
 }
 \keyword{datasets}
