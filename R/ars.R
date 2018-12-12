@@ -1,4 +1,4 @@
-#' Class providing object with methods for communication with R6
+#' ARS class providing object with methods for communication with R6
 #'
 #' @docType class
 #' @importFrom R6 R6Class
@@ -24,12 +24,12 @@
 #' @field private$z a vector of z values, or intersection points, that begins to increase once sample() is run
 #' @section Public Methods:
 #' \describe{
+#'   \item{\code{sample(n, init_l, init_r, squeeze)}}{This method samples n points from using adaptive rejection sampling. User may pick two initalizing points, init_l and init_r which represent data points to start at. Useful if -1 and 1 are far from the pdf, i.e rnorm(mean=3000, sd=1)}
 #'   \item{\code{f(x)}}{This method calculates our funx observation at a given x }
 #'   \item{\code{plot_sampdist()}}{This method plots our normalized envelope function }
 #'   \item{\code{calc_sampdist()}}{This method calculates the sampling distribution from a uniform distribution}
 #'   \item{\code{plot_samples()}}{This method plots our samples in a histogramm, with a blue line highlighting the median value}
-#'   \item{\code{s()}}{This method calculates the envelope or sampling function }
-#'   \item{\code{sample(n)}}{This method samples n points from using adaptive rejection sampling}}
+#'   \item{\code{s()}}{This method calculates the envelope or sampling function }}
 #' @section Private Methods:
 #' \describe{
 #'   \item{\code{h(x)}}{This method calculates the log of our funx at a given point x}
@@ -48,6 +48,7 @@ ars = R6Class(
   public = list(
     ### functions ###
     # initialization
+
     initialize = function(funx, D = c(-Inf, Inf), ...) {
       # input: function and its support, initial points, minimum accepted number of points
       # note: should we give default value of range?
@@ -57,18 +58,18 @@ ars = R6Class(
 
       if(class(D)!="numeric") stop("D or dimensions must be number.")
 
-      if(is.nan(funx(D[1] + .Machine$double.eps, ...)) |
-         is.nan(funx(D[2] - .Machine$double.eps,...)))
-        stop("Function is not defined at bounds") #add small noise for continuous variables
-
-      f = function(x)
-        funx(x, ...)
-
       if (length(D) != 2)
         stop("Input dimension is not a length of 2")
 
       var_min = min(D)
       var_max = max(D)
+
+      if(is.nan(funx(var_min + .Machine$double.eps, ...)) |
+         is.nan(funx(var_max- .Machine$double.eps,...)))
+        stop("Function is not defined at bounds") #add small noise for continuous variables
+
+      f = function(x)
+        funx(x, ...)
 
       if (! check_positive(f, var_min, var_max))
         stop('Input function is not positive in the given support.')
@@ -80,7 +81,7 @@ ars = R6Class(
                           var_max)
       if (abs(Int_f$value - 1.) > 10 * Int_f$abs.error) {
         # note: change tolerance level?
-        warning('Input function is not normalized. The pdf does not integrate to 1.')
+        warning('Input function might not be normalized.')
       }
 
       # set values
@@ -109,13 +110,18 @@ ars = R6Class(
     },
 
     # main function. sample points from distribution
-    sample = function(n = 1000, squeeze = TRUE) {
+    sample = function(n = 1000, init_l = -1, init_r = 1,squeeze = TRUE) {
+      # note:
+      ## 1.squeeze=FALSE will disable squeezing test
+      ## 2.init_l and init_r let the user to input initial value for private$init_y(y_min and y_max)
+      ### in case input function is very far away from y_min=-1 and y_max=1(e.g. N(3000, 1))
+
       #start_npts = as.integer(n ^ (1 / 10)) + 1
       start_npts = 2
       # note: this is just an example of choosing the number of starting points
 
       # sample starting points
-      private$init_y()
+      private$init_y(init_l, init_r)
       if (self$var_min == -Inf && self$var_max == Inf) {
         private$y = c(private$y, rnorm(
           start_npts - length(private$y),
@@ -147,7 +153,6 @@ ars = R6Class(
 
       private$init_scdf()
       private$construct()
-
 
       while (samp < n && loop < 10 * n) {
         # note: l is the number of loops conducted.
@@ -240,12 +245,11 @@ ars = R6Class(
   private = list(
     ### functions ###
     # choose initial points
-    init_y = function() {
+    init_y = function(y_min, y_max) {
       # (re)initialize sample points vector
       private$y = vector(mode = 'numeric')
       # if unbounded on the left
       if (self$var_min == -Inf) {
-        y_min = -1
         iter = 0
         while (calc_deriv(y_min,
                           private$h,
@@ -263,7 +267,6 @@ ars = R6Class(
       }
       # if unbounded on the right
       if (self$var_max == Inf) {
-        y_max = 1
         iter = 0
         while (calc_deriv(y_max,
                           private$h,

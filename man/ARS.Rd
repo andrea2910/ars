@@ -3,7 +3,7 @@
 \docType{class}
 \name{ars}
 \alias{ars}
-\title{Class providing object with methods for communication with R6}
+\title{ARS class providing object with methods for communication with R6}
 \format{\code{\link{R6Class}} object.}
 \usage{
 example <- ars$new(funx=dnorm, D=c(-Inf, Inf))
@@ -17,7 +17,7 @@ example <- ars$new(funx=dnorm, D=c(-Inf, Inf))
 Object of \code{\link{R6Class}} with methods to generate adaptive rejection sampling
 }
 \description{
-Class providing object with methods for communication with R6
+ARS class providing object with methods for communication with R6
 }
 \section{Fields}{
 
@@ -46,12 +46,12 @@ Class providing object with methods for communication with R6
 \section{Public Methods}{
 
 \describe{
+  \item{\code{sample(n, init_l, init_r, squeeze)}}{This method samples n points from using adaptive rejection sampling. User may pick two initalizing points, init_l and init_r which represent data points to start at. Useful if -1 and 1 are far from the pdf, i.e rnorm(mean=3000, sd=1)}
   \item{\code{f(x)}}{This method calculates our funx observation at a given x }
   \item{\code{plot_sampdist()}}{This method plots our normalized envelope function }
   \item{\code{calc_sampdist()}}{This method calculates the sampling distribution from a uniform distribution}
   \item{\code{plot_samples()}}{This method plots our samples in a histogramm, with a blue line highlighting the median value}
-  \item{\code{s()}}{This method calculates the envelope or sampling function }
-  \item{\code{sample(n)}}{This method samples n points from using adaptive rejection sampling}}
+  \item{\code{s()}}{This method calculates the envelope or sampling function }}
 }
 
 \section{Private Methods}{
