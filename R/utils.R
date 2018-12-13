@@ -273,6 +273,11 @@ calc_uz = function(y_l, y_r, hy_l, hy_r, hyprim_l, hyprim_r) {
   z = y_l + (hy_l - hy_r + (y_r - y_l) * hyprim_r) / round(hyprim_r - hyprim_l, 8)
   uz = hy_l + (z - y_l) * hyprim_l
 
+  # additional check to catch certain cases
+  replace_w_nan = round(hyprim_r - hyprim_l, 8) == 0
+  z[replace_w_nan] = NaN
+  uz[replace_w_nan] = NaN
+
   namedVector$new(z, uz)
 }
 
