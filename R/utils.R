@@ -25,8 +25,18 @@ namedVector = R6Class(
       if (length(names) != length(values)) {
         stop('Length of names and values should be equal.')
       }
-      self$names = names
-      self$values = values
+      private$.names = names
+      private$.values = values
+    },
+    
+    get = function(nams) {
+      if (length(levels(factor(self$names))) != length(self$names) ||
+          length(levels(factor(nams))) != length(nams)) {
+        stop('For now this method only functions when names are unique.')
+      }
+      index = match(nams, self$names)
+      index = index[!is.na(index)] # drop NAs
+      return(self$values[index])
     },
 
     add = function(nams, vals) {
@@ -45,20 +55,20 @@ namedVector = R6Class(
       #vals = vals[no_nan_ind]
 
       # add
-      self$names = c(self$names, nams)
-      self$values = c(self$values, vals)
+      private$.names = c(private$.names, nams)
+      private$.values = c(private$.values, vals)
     },
 
     # delete an element by name
     delete_byname = function(nams) {
       if (length(levels(factor(self$names))) != length(self$names) ||
-          length(levels(factor(self$nams))) != length(self$nams)) {
+          length(levels(factor(nams))) != length(nams)) {
         stop('For now this method only functions when names are unique.')
       }
       index = match(nams, self$names)
       index = index[!is.na(index)] # drop NAs
-      self$names = self$names[-index]
-      self$values = self$values[-index]
+      private$.names = private$.names[-index]
+      private$.values = private$.values[-index]
     },
 
     # sort namedVector by name
@@ -72,15 +82,41 @@ namedVector = R6Class(
         index = match(sorted_names[i], self$names)
         sorted_values[i] = self$values[index]
       }
-      self$names = sorted_names
-      self$values = sorted_values
+      private$.names = sorted_names
+      private$.values = sorted_values
     },
-
+    
+    print = function() {
+      cat(sprintf("Names:\n"))
+      print(self$names)
+      cat(sprintf("Values:\n"))
+      print(self$values)
+    }
+  ),
+  active = list(
+    names = function() {
+      return(private$.names)
+    },
+    values = function() {
+      return(private$.values)
+    }
+  ),
+  private = list(
     ### variables ###
-    names = c(),
-    values = c()
+    .names = c(),
+    .values = c()
   )
 )
+
+#' @param ... Passes all arguments to the constructor. See documentation for the
+#'  Constructor below.
+#'
+#' @rdname namedVector
+#'
+#' @export
+#
+named_vec <- namedVector$new
+
 
 #' @title check_positive
 #' @description Check whether a function has negative values

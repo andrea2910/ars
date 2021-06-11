@@ -331,7 +331,7 @@ ars = R6Class(
       if(is.nan(u_z$names) | is.infinite(u_z$names))
         u_z <- namedVector$new(mean(y), mean(hy))
       # the case where it is not log-concave
-      if(FALSE %in% ((u_z$names - y_l) > 0) || FALSE  %in% ((y_r - u_z$names) > 0))
+      if(FALSE %in% ((u_z$names - y_l) > 0) || FALSE %in% ((y_r - u_z$names) > 0))
         stop('Input function is not log-concave.')
 
       u_pts = c(y[1], u_z$names, y[m])
@@ -386,7 +386,6 @@ ars = R6Class(
       a = (u_vals[interv + 1] - u_vals[interv]) / (u_pts[interv +
                                                            1] - u_pts[interv])
       b = u_vals[interv] - a * u_pts[interv]
-
 
       samp_pt = (log(a * (rand - cdf) + exp(a * cdf_pts[interv] + b)) - b) / a
 

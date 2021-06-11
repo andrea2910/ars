@@ -3,25 +3,24 @@
 \docType{class}
 \name{namedVector}
 \alias{namedVector}
+\alias{named_vec}
 \title{Class providing object with methods for communication with R6}
 \format{\code{\link{R6Class}} object.}
 \usage{
-namedVector
+named_vec(...)
+}
+\arguments{
+\item{...}{Passes all arguments to the constructor. See documentation for the
+Constructor below.}
 }
 \value{
 Object of \code{\link{R6Class}} with methods to manipulate data points
 }
 \description{
 Class providing object with methods for communication with R6
+
+Class providing object with methods for communication with R6
 }
-\section{Fields}{
-
-\describe{
-\item{\code{names}}{Stores points}
-
-\item{\code{values}}{Stores y values associated with points}
-}}
-
 \section{Methods}{
 
 \describe{
@@ -34,4 +33,89 @@ Class providing object with methods for communication with R6
 \examples{
 ex <- namedVector$new(names = c(1,2,3), values = c(4,5,6))
 }
-\keyword{datasets}
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{names}}{Stores points}
+
+\item{\code{values}}{Stores y values associated with points}
+}
+\if{html}{\out{</div>}}
+}
+\section{Methods}{
+\subsection{Public methods}{
+\itemize{
+\item \href{#method-new}{\code{namedVector$new()}}
+\item \href{#method-get}{\code{namedVector$get()}}
+\item \href{#method-add}{\code{namedVector$add()}}
+\item \href{#method-delete_byname}{\code{namedVector$delete_byname()}}
+\item \href{#method-sort_byname}{\code{namedVector$sort_byname()}}
+\item \href{#method-print}{\code{namedVector$print()}}
+\item \href{#method-clone}{\code{namedVector$clone()}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-new"></a>}}
+\subsection{Method \code{new()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$new(names, values)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get"></a>}}
+\subsection{Method \code{get()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$get(nams)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-add"></a>}}
+\subsection{Method \code{add()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$add(nams, vals)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-delete_byname"></a>}}
+\subsection{Method \code{delete_byname()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$delete_byname(nams)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-sort_byname"></a>}}
+\subsection{Method \code{sort_byname()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$sort_byname(decreasing = FALSE)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-print"></a>}}
+\subsection{Method \code{print()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$print()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-clone"></a>}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{namedVector$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
+}
